@@ -61,10 +61,7 @@
                     <div class="form-group boxed">
                         <div class="input-wrapper">
                             <select class="form-control" id="cabang_id" required>
-                                <option value="">Pilih Cabang</option>
-                                <option value="1">Cabang 1</option>
-                                <option value="2">Cabang 2</option>
-                                <option value="3">Cabang 3</option>
+                                <option value="">Memuat cabang...</option> <!-- Opsi awal sebelum data dimuat -->
                             </select>
                         </div>
                     </div>
@@ -87,7 +84,7 @@
 
                     <div class="form-links mt-2">
                         <div>
-                            <a href="/login">Already have an account? Login</a>
+                            <a href="/">Already have an account? Login</a>
                         </div>
                     </div>
 
@@ -98,6 +95,41 @@
     <!-- * App Capsule -->
 
     <script>
+        async function loadCabangOptions() {
+            let cabangSelect = document.getElementById('cabang_id');
+
+            try {
+                console.log("🔄 Mengambil data cabang dari API...");
+                let response = await fetch('http://127.0.0.1:8000/api/cabangs');
+                let result = await response.json();
+                console.log("📌 Response dari API:", result);
+
+                // Pastikan API mengembalikan array daftar cabang
+                if (response.ok && result.data && result.data.data.length > 0) {
+                    cabangSelect.innerHTML = '<option value="">Pilih Cabang</option>';
+
+                    result.data.data.forEach(cabang => { // Ambil data dari pagination
+                        let option = document.createElement('option');
+                        option.value = cabang.id;
+                        option.textContent = cabang.nama_cabang;
+                        cabangSelect.appendChild(option);
+                    });
+                } else {
+                    console.error("❌ Gagal mengambil data cabang:", result);
+                    cabangSelect.innerHTML = '<option value="">Tidak ada cabang tersedia</option>';
+                }
+            } catch (error) {
+                console.error("❌ Terjadi kesalahan saat mengambil data cabang:", error);
+                cabangSelect.innerHTML = '<option value="">Gagal Memuat Cabang</option>';
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", async function() {
+            await loadCabangOptions();
+        });
+
+
+
         document.getElementById('registerForm').addEventListener('submit', async function(event) {
             event.preventDefault();
 
@@ -110,7 +142,6 @@
             let message = document.getElementById('message');
             let registerButton = document.getElementById('registerButton');
 
-            // Validasi input
             if (!name || !email || !password || !confirmPassword || !cabangId || !faceImage) {
                 message.innerText = "Semua field harus diisi!";
                 return;
@@ -131,7 +162,6 @@
                 return;
             }
 
-            // Matikan tombol untuk mencegah double submit
             registerButton.disabled = true;
             message.innerText = "";
 
@@ -180,6 +210,7 @@
             return re.test(email);
         }
     </script>
+
 
     <script src="{{ asset('assets/js/lib/jquery-3.4.1.min.js') }}"></script>
     <script src="{{ asset('assets/js/lib/popper.min.js') }}"></script>

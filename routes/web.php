@@ -12,3 +12,4 @@ Route::post('/register', [AuthControllers::class, 'register']);
 
 Route::get('/user', [UserControllers::class, 'index']);
 Route::get('/presensi-masuk', [UserControllers::class, 'presensimasuk']);
+Route::get('/presensi-keluar', [UserControllers::class, 'presensikeluar']);

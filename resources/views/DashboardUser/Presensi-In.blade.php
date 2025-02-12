@@ -20,7 +20,6 @@
                     <div class="webcam-capture"></div>
                 </div>
                 <button id="capture-btn" class="btn btn-primary mt-3">Ambil Gambar & Kirim Presensi</button>
-                <canvas id="canvas" style="display: none;"></canvas>
             </div>
         </div>
     </div>
@@ -28,6 +27,18 @@
 
 @push('myscript')
     <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            setCameraSize();
+            window.addEventListener("resize", setCameraSize);
+            checkAttendanceStatus(); // Cek apakah user sudah absen
+
+            document.getElementById('capture-btn').addEventListener('click', function() {
+                Webcam.snap(function(data_uri) {
+                    sendAttendance(data_uri);
+                });
+            });
+        });
+
         function setCameraSize() {
             let screenWidth = window.innerWidth;
             let screenHeight = window.innerHeight;
@@ -45,18 +56,7 @@
             Webcam.attach('.webcam-capture');
         }
 
-        document.addEventListener("DOMContentLoaded", function() {
-            setCameraSize();
-            window.addEventListener("resize", setCameraSize);
-
-            document.getElementById('capture-btn').addEventListener('click', function() {
-                Webcam.snap(function(data_uri) {
-                    sendAttendance(data_uri);
-                });
-            });
-        });
-
-        function sendAttendance(imageData) {
+        async function sendAttendance(imageData) {
             let token = localStorage.getItem('auth_token');
             if (!token) {
                 alert("Silakan login terlebih dahulu.");
@@ -64,7 +64,17 @@
                 return;
             }
 
+            if (!navigator.geolocation) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Fitur Tidak Tersedia!',
+                    text: 'Perangkat ini tidak mendukung geolokasi.',
+                });
+                return;
+            }
             navigator.geolocation.getCurrentPosition(async function(position) {
+                    console.log("Lokasi User:", position.coords.latitude, position.coords.longitude);
+
                     let formData = new FormData();
                     formData.append("jenis_absen", "masuk");
                     formData.append("latitude", position.coords.latitude);
@@ -81,19 +91,72 @@
                         });
 
                         let result = await response.json();
+                        console.log("Response dari Server:", result);
+
                         if (response.ok) {
                             alert(result.message);
+                            window.location.href = "/user"; // Redirect ke halaman user
                         } else {
-                            alert("Gagal: " + result.message);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal!',
+                                text: result.message || "Terjadi kesalahan saat presensi.",
+                            });
                         }
                     } catch (error) {
                         console.error("Error:", error);
-                        alert("Terjadi kesalahan saat mengirim presensi.");
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops!',
+                            text: "Terjadi kesalahan saat mengirim presensi.",
+                        });
                     }
                 },
                 function(error) {
-                    alert("Tidak dapat mengambil lokasi. Aktifkan GPS Anda.");
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Lokasi Tidak Dapat Diakses!',
+                        text: 'Pastikan GPS diaktifkan dan coba lagi.',
+                    });
                 });
+        }
+
+        async function checkAttendanceStatus() {
+            let token = localStorage.getItem('auth_token');
+            if (!token) {
+                window.location.href = "/";
+                return;
+            }
+
+            try {
+                let response = await fetch('http://127.0.0.1:8000/api/karyawan/daily-status', {
+                    method: "GET",
+                    headers: {
+                        "Authorization": "Bearer " + token,
+                        "Accept": "application/json"
+                    }
+                });
+
+                let result = await response.json();
+                console.log("Status Absen:", result);
+
+                if (result.data && (result.data.status === "Hadir" || result.data.status === "Terlambat")) {
+                    let captureBtn = document.getElementById('capture-btn');
+                    captureBtn.disabled = true;
+                    captureBtn.innerText = "Anda sudah absen masuk";
+                    captureBtn.classList.remove("btn-primary");
+                    captureBtn.classList.add("btn-secondary");
+
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Anda sudah absen!',
+                        text: 'Tidak perlu melakukan presensi ulang.',
+                        confirmButtonColor: '#3085d6',
+                    });
+                }
+            } catch (error) {
+                console.error("Error mengecek status absen:", error);
+            }
         }
 
         function dataURItoBlob(dataURI) {
