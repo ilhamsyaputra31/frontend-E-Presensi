@@ -30,7 +30,7 @@
         document.addEventListener("DOMContentLoaded", function() {
             setCameraSize();
             window.addEventListener("resize", setCameraSize);
-            checkAttendanceStatus(); // Cek apakah user sudah absen masuk
+            checkAttendanceStatus();
 
             document.getElementById('capture-btn').addEventListener('click', function() {
                 Webcam.snap(function(data_uri) {

@@ -3,7 +3,7 @@
     <div id="appCapsule">
         <div class="section" id="user-section">
             <div id="user-detail">
-                <div class="avatar">
+                <div id="user-image" class="avatar">
                     <img src="assets/img/sample/avatar/avatar1.jpg" alt="avatar" class="imaged w64 rounded">
                 </div>
                 <div id="user-info">
@@ -29,7 +29,7 @@
                         </div>
                         <div class="item-menu text-center">
                             <div class="menu-icon">
-                                <a href="" class="danger" style="font-size: 40px;">
+                                <a href="/izin-cuti" class="danger" style="font-size: 40px;">
                                     <ion-icon name="calendar-number"></ion-icon>
                                 </a>
                             </div>
@@ -39,7 +39,7 @@
                         </div>
                         <div class="item-menu text-center">
                             <div class="menu-icon">
-                                <a href="" class="warning" style="font-size: 40px;">
+                                <a href="History-Absen" class="warning" style="font-size: 40px;">
                                     <ion-icon name="document-text"></ion-icon>
                                 </a>
                             </div>
@@ -106,10 +106,9 @@
                 <h4 class="text-center text-primary fw-bold">📋 Status Absensi Hari Ini</h4>
                 <div class="card shadow-lg border-0 rounded-4">
                     <div class="card-body text-center py-4">
-                        <div id="status-container" class="mb-3">
+                        {{-- <div id="status-container" class="mb-3">
                             <span id="status" class="badge bg-secondary px-3 py-2">Memuat status...</span>
-                        </div>
-
+                        </div> --}}
                         <div class="row">
                             <div class="col-6">
                                 <div class="card border-0 shadow-sm py-3">
@@ -167,14 +166,23 @@
                         window.location.href = "/";
                         return;
                     }
-
                     let result = await response.json();
                     if (response.ok) {
                         document.getElementById('user-name').innerText = result.user.name;
-                        document.getElementById('user-role').innerText = result.user.role;
+                        document.getElementById('user-role').innerText = result.user.role_id;
+
+                        let userImage = document.getElementById('user-avatar');
+
+                        if (result.user.face_image) {
+                            userImage.src = "http://127.0.0.1:8000/public/storage/faces/" + result.user
+                                .face_image;
+                        } else {
+                            userImage.src = 'assets/img/default-avatar.jpg';
+                        }
                     } else {
                         console.error('Gagal mengambil data user:', result);
                     }
+
                 } catch (error) {
                     console.error("Error saat mengecek session:", error);
                 }
@@ -192,7 +200,6 @@
                     });
 
                     let result = await response.json();
-                    console.log("Response dari API:", result); // Debug response
 
                     let statusContainer = document.getElementById('status-container');
                     let statusText = document.getElementById('status');
@@ -202,35 +209,31 @@
                     if (result.status === "success") {
                         let data = result.data;
 
-                        // Set status utama dengan warna berbeda
-                        statusText.innerText = data.status;
-                        statusText.classList.remove("bg-secondary", "bg-success", "bg-warning",
-                            "bg-danger");
+                        // statusText.classList.remove("bg-secondary", "bg-success", "bg-warning",
+                        //     "bg-danger");
 
-                        if (data.status === "Hadir") {
-                            statusText.classList.add("bg-success");
-                        } else if (data.status === "Terlambat") {
-                            statusText.classList.add("bg-warning");
-                        } else {
-                            statusText.classList.add("bg-danger");
-                        }
+                        // if (data.status === "Hadir") {
+                        //     statusText.classList.add("bg-success");
+                        // } else if (data.status === "Terlambat") {
+                        //     statusText.classList.add("bg-warning");
+                        // } else {
+                        //     statusText.classList.add("bg-danger");
+                        // }
 
-                        // Menampilkan waktu masuk jika ada
                         if (data.absensi_masuk) {
                             masukTime.classList.remove('d-none');
                             masukTime.querySelector('span').innerText = formatTime(data.absensi_masuk
                                 .waktu_absen);
                         } else {
-                            masukTime.classList.add('d-none'); // Sembunyikan jika tidak ada data
+                            masukTime.classList.add('d-none');
                         }
 
-                        // Menampilkan waktu keluar jika ada
                         if (data.absensi_keluar) {
                             keluarTime.classList.remove('d-none');
                             keluarTime.querySelector('span').innerText = formatTime(data.absensi_keluar
                                 .waktu_absen);
                         } else {
-                            keluarTime.classList.add('d-none'); // Sembunyikan jika tidak ada data
+                            keluarTime.classList.add('d-none');
                         }
 
                     } else {
@@ -244,7 +247,6 @@
                 }
             }
 
-            // Fungsi untuk mengubah format waktu dari "2025-02-12 16:03:20" menjadi "16:03"
             function formatTime(datetime) {
                 let date = new Date(datetime);
                 let hours = date.getHours().toString().padStart(2, '0');
@@ -252,11 +254,7 @@
                 return `${hours}:${minutes}`;
             }
 
-            // Panggil fungsi untuk memuat status absensi
             loadDailyStatus();
-
-
-
 
             checkSession();
 

@@ -22,4 +22,12 @@ class UserControllers extends Controller
     {
         return view('DashboardUser.Presensi-Out');
     }
+    public function izincuti()
+    {
+        return view('DashboardUser.cuti');
+    }
+    public function history()
+    {
+        return view('DashboardUser.History-Absen');
+    }
 }

@@ -30,7 +30,7 @@
         document.addEventListener("DOMContentLoaded", function() {
             setCameraSize();
             window.addEventListener("resize", setCameraSize);
-            checkAttendanceStatus(); // Cek apakah user sudah absen
+            checkAttendanceStatus();
 
             document.getElementById('capture-btn').addEventListener('click', function() {
                 Webcam.snap(function(data_uri) {
@@ -74,6 +74,7 @@
             }
             navigator.geolocation.getCurrentPosition(async function(position) {
                     console.log("Lokasi User:", position.coords.latitude, position.coords.longitude);
+                    console.log("Data Presensi akan dikirim dengan lokasi ini.");
 
                     let formData = new FormData();
                     formData.append("jenis_absen", "masuk");

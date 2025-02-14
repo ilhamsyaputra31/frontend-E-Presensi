@@ -85,33 +85,32 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // Jika sudah login, redirect ke dashboard
-            if (localStorage.getItem('auth_token')) {
-                window.location.href = "/user";
+            let token = localStorage.getItem('auth_token');
+            let role = localStorage.getItem('role_id');
+
+            if (token) {
+                redirectUser(role);
             }
         });
 
-        // Ambil elemen form
         const loginForm = document.getElementById('loginForm');
 
         if (loginForm) {
             loginForm.addEventListener('submit', async function(event) {
-                event.preventDefault(); // Mencegah reload halaman
+                event.preventDefault();
 
                 let email = document.getElementById('email1').value.trim();
                 let password = document.getElementById('password1').value.trim();
                 let loader = document.getElementById('loader');
                 let errorMessage = document.getElementById('errorMessage');
 
-                // Validasi input
                 if (!email || !password) {
                     errorMessage.innerText = "Email dan password tidak boleh kosong!";
                     return;
                 }
 
-                // Tampilkan loader
                 loader.style.display = "block";
-                errorMessage.innerText = ""; // Reset pesan error
+                errorMessage.innerText = "";
 
                 try {
                     let response = await fetch('http://127.0.0.1:8000/api/login', {
@@ -127,10 +126,13 @@
                     });
 
                     let result = await response.json();
+                    console.log("Response API:", result);
+                    console.log("Status HTTP:", response.status);
 
-                    if (response.ok) {
-                        localStorage.setItem('auth_token', result.token); // Simpan token JWT
-                        window.location.href = "/user"; // Redirect ke dashboard
+                    if (response.ok && result.user && result.user.role_id) {
+                        localStorage.setItem('auth_token', result.token);
+                        localStorage.setItem('role_id', result.user.role_id);
+                        redirectUser(result.user.role_id);
                     } else {
                         errorMessage.innerText = result.message || 'Login gagal! Periksa email dan password.';
                     }
@@ -139,11 +141,26 @@
                     errorMessage.innerText = 'Terjadi kesalahan. Coba lagi nanti.';
                 }
 
-                // Sembunyikan loader setelah proses selesai
                 loader.style.display = "none";
             });
         }
+
+        function redirectUser(role) {
+            if (role == 1) {
+                window.location.href = "/SuperAdmin";
+            } else if (role == 2) {
+                window.location.href = "/admin";
+            } else if (role == 3) {
+                window.location.href = "/user";
+            } else {
+                console.error("Role tidak dikenal:", role);
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('role_id');
+                window.location.href = "/";
+            }
+        }
     </script>
+
 
 
 
